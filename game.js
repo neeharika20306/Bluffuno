@@ -1,6 +1,4 @@
-
 'use strict';
-
 
 function qs(selector) { return document.querySelector(selector); }
 
@@ -21,9 +19,7 @@ const VALUE_LABEL = {
   skip: '⊘', reverse: '↺', draw2: '+2', wild: '✦', wild4: '+4'
 };
 
-
 let G = {};
-
 
 function buildDeck() {
   const deck = [];
@@ -94,13 +90,14 @@ function renderAll() {
   renderColorRing();
 }
 
+/* ── HUD ── */
 function renderHUD() {
   qs('#hud-turn').textContent  = G.players[G.turn].name;
   qs('#hud-deck').textContent  = G.deck.length;
   qs('#hud-color').textContent = G.currentColor.toUpperCase();
 }
 
-
+/* ── COLOR RING ── */
 function renderColorRing() {
   const ring = qs('#current-color-ring');
   ring.className = '';
@@ -111,7 +108,7 @@ function renderColorRing() {
   dot.style.boxShadow   = `0 0 8px ${COLOR_MAP[G.currentColor] || '#888'}`;
 }
 
-
+/* ── OPPONENTS ── */
 function renderOpponents() {
   const strip = qs('#opponents-strip');
   strip.innerHTML = '';
@@ -224,7 +221,6 @@ function renderBluffNotice() {
   }
 }
 
-
 function makeCardEl(card, faceUp) {
   const wrap = el('div', `game-card card-${card.color}`);
 
@@ -306,6 +302,7 @@ function onDrawClick() {
   nextTurn();
 }
 
+/* ── PLAY CARD (human) ── */
 async function humanPlayCard(cardIdx) {
   const card = G.players[0].hand[cardIdx];
   let color  = null;
@@ -315,6 +312,7 @@ async function humanPlayCard(cardIdx) {
   resolvePlayCard(0, cardIdx, color);
 }
 
+/* ── RESOLVE PLAY ── */
 function resolvePlayCard(playerIdx, cardIdx, chosenColor) {
   const pl   = G.players[playerIdx];
   const card = pl.hand.splice(cardIdx, 1)[0];
@@ -332,6 +330,7 @@ function resolvePlayCard(playerIdx, cardIdx, chosenColor) {
   applyCardEffect(card, playerIdx, chosenColor);
 }
 
+/* ── CARD EFFECTS ── */
 function applyCardEffect(card, playerIdx, chosenColor) {
   const n = G.players.length;
 
@@ -363,6 +362,7 @@ function applyCardEffect(card, playerIdx, chosenColor) {
   nextTurn();
 }
 
+/* ── NEXT TURN ── */
 function nextTurn() {
   G.selectedCard = null;
   G.turn = (G.turn + G.direction + G.players.length) % G.players.length;
@@ -372,6 +372,7 @@ function nextTurn() {
   }
 }
 
+/* ── BLUFF PLAY ── */
 qs('#btn-bluff').addEventListener('click', () => {
   if (G.selectedCard === null || G.turn !== 0 || G.bluffPending) return;
 
@@ -390,6 +391,7 @@ qs('#btn-bluff').addEventListener('click', () => {
 
   renderAll();
 
+  // Auto-resolve if no one calls within 2.5s
   setTimeout(() => {
     if (G.bluffPending && G.lastBluff?.playerIdx === 0) {
       aiMaybeCallBluff();
@@ -397,6 +399,7 @@ qs('#btn-bluff').addEventListener('click', () => {
   }, 2500);
 });
 
+/* ── PLAY CARD BUTTON ── */
 qs('#btn-play').addEventListener('click', () => {
   if (G.selectedCard === null || G.turn !== 0) return;
   const idx = G.selectedCard;
@@ -404,14 +407,17 @@ qs('#btn-play').addEventListener('click', () => {
   humanPlayCard(idx);
 });
 
+/* ── DRAW BUTTON ── */
 qs('#btn-draw').addEventListener('click', onDrawClick);
 
+/* ── CALL BLUFF ── */
 qs('#btn-call').addEventListener('click', () => {
   if (!G.callWindowOpen || !G.lastBluff || G.lastBluff.playerIdx === 0) return;
   log(`You call the bluff! 🔍`, 'log-bluff');
   resolveBluffCall(0);
 });
 
+/* ── UNO BUTTON ── */
 qs('#btn-uno').addEventListener('click', () => {
   toast('UNO! 🃏');
   log(`${G.players[0].name} declares UNO!`);
@@ -442,6 +448,7 @@ function resolveBluffCall(callerIdx) {
   G.lastBluff      = null;
 
   if (!wasPlayable) {
+    // CAUGHT BLUFFING — bluffer draws 3
     for (let i = 0; i < 3; i++) {
       if (!G.deck.length) reshuffleDeck();
       bluffer.hand.push(G.deck.pop());
@@ -452,6 +459,7 @@ function resolveBluffCall(callerIdx) {
     log(`${bluffer.name} was bluffing. Draws 3 cards.`, 'log-caught');
     nextTurn();
   } else {
+    // FALSE CALL — caller draws 2
     for (let i = 0; i < 2; i++) {
       if (!G.deck.length) reshuffleDeck();
       caller.hand.push(G.deck.pop());
@@ -495,6 +503,7 @@ function aiTurn() {
     return;
   }
 
+  // Prefer action cards
   playable.sort((a, b) => {
     const rank = c => ['draw2','wild4','wild','skip','reverse'].indexOf(c.value) >= 0 ? 1 : 0;
     return rank(b.c) - rank(a.c);
@@ -502,6 +511,7 @@ function aiTurn() {
 
   const { c: card, i: cardIdx } = playable[0];
 
+  // Wild color: pick most common in hand
   let color = null;
   if (card.type === 'wild' || card.type === 'wild4') {
     const counts = {};
@@ -510,6 +520,7 @@ function aiTurn() {
     color = sorted[0]?.[0] || COLORS[Math.floor(Math.random() * 4)];
   }
 
+  // AI bluffs ~20% when it has choices
   const mayBluff = Math.random() < 0.20 && playable.length > 1;
   if (mayBluff) {
     G.lastBluff    = { playerIdx: G.turn, cardIdx, card };
@@ -519,6 +530,7 @@ function aiTurn() {
     log(`${pl.name} played face-down. 🎭`, 'log-bluff');
     toast(`${pl.name} plays face-down — call their bluff?`);
     renderAll();
+    // Auto-resolve: human has 3s to call
     setTimeout(() => {
       if (G.bluffPending && G.lastBluff?.playerIdx === G.turn) {
         resolveBluffAccepted();
@@ -632,7 +644,7 @@ qs('#btn-start').addEventListener('click', () => {
     names.push(inp?.value.trim() || defaultNames[i - 1]);
   }
 
-
+  // Show game screen
   qs('#setup-screen').style.display = 'none';
   qs('#game-screen').classList.remove('hidden');
   qs('#game-log').classList.add('visible');
@@ -644,4 +656,3 @@ qs('#btn-start').addEventListener('click', () => {
   log('✦ Match begins. May the best bluffer win.');
   toast('Select a card to play — or bluff your way through.');
 });
-

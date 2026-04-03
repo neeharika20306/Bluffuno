@@ -11,8 +11,10 @@
 </head>
 <body>
 
+  <!-- GRAIN OVERLAY -->
   <div class="grain"></div>
 
+  <!-- AMBIENT ORBS -->
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
@@ -52,6 +54,7 @@
 
   <div id="game-screen" class="hidden">
 
+    <!-- HEADER -->
     <header id="game-header">
       <div class="header-logo">Bluff<span>Uno</span></div>
 
@@ -74,18 +77,23 @@
       <button class="btn-ghost" id="btn-new-game">NEW GAME</button>
     </header>
 
+    <!-- TABLE -->
     <main id="table">
 
+      <!-- OPPONENTS STRIP -->
       <section id="opponents-strip"></section>
 
+      <!-- CENTER ARENA -->
       <section id="arena">
 
+        <!-- Draw Pile -->
         <div class="pile-group" id="draw-group">
           <div class="pile-label">DRAW</div>
           <div class="draw-stack" id="draw-stack"></div>
           <div class="pile-count" id="deck-count-lbl"></div>
         </div>
 
+        <!-- Middle info -->
         <div id="arena-center">
           <div id="current-color-ring"></div>
           <div id="bluff-notice" class="hidden">
@@ -100,6 +108,7 @@
           </div>
         </div>
 
+        <!-- Discard Pile -->
         <div class="pile-group" id="discard-group">
           <div class="pile-label">DISCARD</div>
           <div class="discard-zone" id="discard-zone"></div>
@@ -107,6 +116,7 @@
 
       </section>
 
+      <!-- ACTION BAR -->
       <section id="action-bar">
         <button class="action-btn btn-play"  id="btn-play"  disabled>
           <span class="action-icon">▶</span>
@@ -130,6 +140,7 @@
         </button>
       </section>
 
+      <!-- PLAYER ZONE -->
       <section id="player-zone">
         <div class="player-meta">
           <div class="turn-indicator" id="player-turn-ind"></div>
@@ -141,7 +152,7 @@
 
     </main>
 
-  </div>
+  </div><!-- /game-screen -->
 
   <div id="game-log">
     <div class="log-title">MATCH LOG</div>
